@@ -10,6 +10,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private bool controllock = false;
 
     [Header("Bounce Effect")]
+    [SerializeField] private TrailRenderer trailRenderer;
     [SerializeField] private Vector3 originalSize = new Vector3(1f, 1f, 1f);
     [SerializeField] private Vector3 SquishSize ;
     [SerializeField] private Vector3 StretchSize;
@@ -27,6 +28,7 @@ public class PlayerController : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     private void Awake()
     {
+        trailRenderer = GetComponentInChildren<TrailRenderer>();
         deatheffect = GetComponent<DeathEffect>();
         controllock = false;
     }
@@ -46,14 +48,17 @@ public class PlayerController : MonoBehaviour
             rb.bodyType = RigidbodyType2D.Dynamic;
             controllock = false;
         }
-        Vector3 currentPos = transform.position; 
-        if(currentPos.x > screenLimitX)
+        Vector3 currentPos = transform.position;
+        trailRenderer.enabled = true;
+        if (currentPos.x > screenLimitX)
         {
             currentPos.x = -screenLimitX;
+            trailRenderer.enabled = false;
         }
         if (currentPos.x < -screenLimitX)
         {
             currentPos.x = screenLimitX;
+            trailRenderer.enabled = false;
         }
         transform.position = currentPos;
     }
@@ -74,6 +79,16 @@ public class PlayerController : MonoBehaviour
                 controllock = true;
                 deatheffect.Play();
             }
+            else if (collision.transform.CompareTag("Bounce"))
+            {
+                if(rb.linearVelocity.y <= 0f)
+                {
+                    if (controllock == true) return;
+                    rb.AddForceY(jumpForce*2f, ForceMode2D.Impulse);
+                    Debug.Log("Super Jump");
+                    PlaySquishStretch();
+                }
+            }
             else if (rb.linearVelocity.y <= 0f)
             {
                 if (controllock == true) return;
@@ -82,8 +97,8 @@ public class PlayerController : MonoBehaviour
                 PlaySquishStretch();
                 //transform.localScale = new Vector3(transform.localScale.x, 0.5f, transform.localScale.z);
             }
-
         }
+        
     }
 
     private void PlaySquishStretch()
